@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var money = 0;
+var lock = 0;
 
 var UI = {
 	click_powers: document.getElementById("click_powers"),
@@ -147,8 +148,8 @@ function getFactoryHTML(gem) {
 			<div class="popup">
 				<strong class="name">Quartz Factory</strong>
 				<div class="rate">+1 per second</div>
-				<div class="price">Costs $18</div>
 				<div class="owned">0 owned</div>
+				<div class="price"></div>
 			</div>
 		</div>*/
 
@@ -166,8 +167,8 @@ function getFactoryHTML(gem) {
 			<strong class="name">Quartz Factory</strong>
 			<div class="rate">0.5 quartz per second</div>
 			<div class="value">Quartz sells for $1 each</div>
-			<div class="price">Costs $18</div>
 			<div class="owned">0 owned</div>
+			<div class="price"></div>
 		</div>`;
 
 	refs.anchor = container.querySelector(".popup_anchor");
@@ -201,7 +202,7 @@ function getUpgradeHTML(upgrade) {
 		<div class="popup">
 			<strong class="name">asdf</strong>
 			<div class="description">blah blah blah</div>
-			<div class="price">Costs $18</div>
+			<div class="price"></div>
 		</div>`;
 
 	refs.anchor = container.querySelector(".popup_anchor");
@@ -663,8 +664,17 @@ function updateMoney(amount = 0) {
 		updateFactory(gem);
 	});
 	Upgrades.forEach(function(upgrade) {
-		if (!upgrade.owned)
-			updateUpgrade(upgrade);
+		if (!upgrade.owned) {
+			if (upgrade.name === "Auto Drop V3") {
+				if (Upgrades[2].owned && Upgrade[3].owned)
+					updateUpgrade(upgrade);
+			} else if (upgrade.name === "Auto Drop V2") {
+				if (Upgrades[2].owned)
+					updateUpgrade(upgrade);
+			} else {
+				updateUpgrade(upgrade);
+			}
+		}
 	});
 	return money;
 }
@@ -819,9 +829,10 @@ function loadSave(save){
 }
 
 function saveGame() {
-	localStorage.setItem("save", buildSave());
-	return true;
-	//console.log("Game saved");
+	if (lock === 0) {
+		localStorage.setItem("save", buildSave());
+		return true;
+	}
 }
 
 function loadGame() {
@@ -854,6 +865,7 @@ function importGame(code){
 }
 
 function resetGame() {
+	lock = 1;
 	localStorage.clear();
 	console.log("Game save deleted");
 	location.reload();
@@ -923,6 +935,12 @@ function formatMoney(num = money) {
 	var suffix = ["", "k", "M", "B", "T", "Q"];
 
 	var formatted = "";
+
+	if (thirdpower == 0 || num > 100 )
+		formatted = Math.floor(num);
+	else 
+		formatted = parseFloat(Math.round(num * 100) / 100).toFixed(2);
+	/*
 	if (thirdpower === 0 || num >= 100)
 		formatted = Math.floor(num);
 	else if (num >= 10) {
@@ -930,12 +948,28 @@ function formatMoney(num = money) {
 	} else {
 		formatted = Math.floor(num * 100) / 100;
 	}
+	*/
 	formatted += suffix[thirdpower];
 	return "$" + formatted;
 }
 
 function formatTime(ms) {
-	return Math.ceil(ms / 1000) + "s";
+	time = ms/1000;
+	out_time = time;
+	out_suffix = " seconds";
+
+	if (time > 60 && time < 3600) { // Larger than one minute but less than one hour
+		out_time /= 60;
+		out_suffix = " minutes";
+	} else if (time < 86400) { // Less than one day
+		out_time /= 3600;
+		out_suffix = " hours";
+	} else if (time > 86400) { // More than one day
+		out_time /= 86400;
+		out_suffix = " days";
+	}
+
+	return Math.floor(out_time) + out_suffix;
 }
 
 function getTotalRate() {
@@ -1110,9 +1144,12 @@ function init() {
 	setInterval(function() {
 		updateStats();
 		document.title = "Gem Drop ("+formatMoney()+")";
+	}, 1000);
+
+	setInterval(function() {
 		if(Settings.enable_save)
 			saveGame();
-	}, 1000);
+	}, 15000)
 
 	loadGame();
 	updateMoney();

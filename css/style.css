@@ -239,8 +239,8 @@ button:focus {
 
 
 .progressbar_container {
-	margin-left:10px;
-	margin-top:25px;
+	margin-left:-60px;
+	margin-top:70px;
 }
 
 .progressbar_outer {
@@ -259,14 +259,15 @@ button:focus {
 	background-color: white;
 }
 
+/* I've broken it
 .timeleft {
 	float:left;
 	font-weight: bold;
-	margin-top: -5px;
-    margin-left: 10px;
+	margin-top: 40px;
+    margin-left: -20px;
 	opacity: 0;
 	transition:opacity 0.15s;
-}
+} */
 
 .progressbar_container {
 	float:left;

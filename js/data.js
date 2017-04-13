@@ -587,6 +587,7 @@ Achievements.clickpower_gems = [
 	new Achievement("Hello world", "Spawn a gem by clicking", 1, function(){ return Stats.clickpower_gems >= 1; }),
 	new Achievement("Click x1000", "Spawn 1000 gems by clicking", 1000, function(){ return Stats.clickpower_gems >= 1000; }), // TODO
 	new Achievement("Click x10k", "Spawn 10k gems by clicking", 10000, function(){ return Stats.clickpower_gems >= 10000; }), // TODO
+	new Achievement("Minimum Clicks", "Spawn 1m gems with the minimum amount of clicks", 100000, function(){ return (Stats.clickpower_gems >= 1000000 && Stats.clickpower_gems < 26); }),
 ];
 
 // Upgrades owned
