@@ -256,7 +256,7 @@ var Upgrades = [
 		category: UPGRADE_CATEGORY.INVENTORY_SIZE,
 		onPurchase: function(){
 			Inventory.build();
-			Achievements.misc.inventory.condition = function(){ return true; };
+			//Achievements.misc.inventory.condition = function(){ return true; };
 			Achievements.misc.inventory.check();
 		},
 		size: { width: 300, height: 500},
@@ -271,9 +271,9 @@ var Upgrades = [
 		category: UPGRADE_CATEGORY.AUTO_DROP,
 		rate: 10,
 		owned: false,
-		onPurchase: function(){
-			AutoDrop.rate = this.rate;
-		},
+		// onPurchase: function(){
+		// 	AutoDrop.rate = this.rate;
+		// },
 		img: "img/autodrop-1.png"
 	},
 	{
@@ -284,9 +284,9 @@ var Upgrades = [
 		category: UPGRADE_CATEGORY.AUTO_DROP,
 		rate: 5,
 		owned: false,
-		onPurchase: function(){
-			AutoDrop.rate = this.rate;
-		},
+		// onPurchase: function(){
+		// 	AutoDrop.rate = this.rate;
+		// },
 		img: "img/autodrop-2.png"
 	},
 	{
@@ -298,8 +298,8 @@ var Upgrades = [
 		rate: 0,
 		owned: false,
 		onPurchase: function(){
-			AutoDrop.rate = this.rate;
-
+			//AutoDrop.rate = this.rate;
+			Achievements.misc.autodrop.check();
 		},
 		img: "img/autodrop-3.png"
 	},
@@ -465,7 +465,7 @@ var Stats = {
 	factories: 0,
 	achievements:0,
 	prestige: 0,
-	start_date: new Date().getTime(),
+	play_time: 0,
 	prestige_start_date: new Date().getTime(),
 	sold: 0,
 	wasted: 0
@@ -587,7 +587,7 @@ Achievements.clickpower_gems = [
 	new Achievement("Hello world", "Spawn a gem by clicking", 1, function(){ return Stats.clickpower_gems >= 1; }),
 	new Achievement("Click x1000", "Spawn 1000 gems by clicking", 1000, function(){ return Stats.clickpower_gems >= 1000; }), // TODO
 	new Achievement("Click x10k", "Spawn 10k gems by clicking", 10000, function(){ return Stats.clickpower_gems >= 10000; }), // TODO
-	new Achievement("Minimum Clicks", "Spawn 1m gems with the minimum amount of clicks", 100000, function(){ return (Stats.clickpower_gems >= 1000000 && Stats.clickpower_gems < 26); }),
+	new Achievement("Minimum Clicks", "Spawn 1M gems with the minimum amount of clicks", 100000, function(){ return (Stats.gems >= 1000000 && Stats.clickpower_gems < 26); }),
 ];
 
 // Upgrades owned
@@ -631,7 +631,11 @@ Achievements.meta = [
 	new Achievement("Meta-Achievement II", "Unlock 30 achievements", 3e3, function(){ return Stats.achievements >= 30; }),
 	new Achievement("Meta-Achievement III", "Unlock 45 achievements", 4.5e3, function(){ return Stats.achievements >= 45; }),
 	new Achievement("Meta-Achievement IV", "Unlock 60 achievements", 6e3, function(){ return Stats.achievements >= 60; }),
-	new Achievement("Meta-Meta-Achievement", "Unlock 4 meta-achievements", 4e3, function(){ return false; }),
+	new Achievement("Meta-Meta-Achievement", "Unlock 4 meta-achievements", 4e3, function(){
+		for(var i = 0; i < 4; i++)
+			if(!Achievements.meta[i].owned) return false;
+		return true;
+	}),
 	new Achievement("Overachiever", "Unlock every achievement", 420, function(){ return Stats.achievements >= Stats.achievements.length - 1; }, {redtext: "(except this one)"}),
 ];
 
@@ -646,17 +650,16 @@ Achievements.prestige = [
 
 // Time played
 Achievements.time = [
-	new Achievement("60 minutes", "1 hour of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 >= 1; }),
-	new Achievement("24 hours", "1 day of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 1; }),
-	new Achievement("2 days", "2 days of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 2; }),
-	new Achievement("3 days", "3 days of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 3; }),
-	new Achievement("4 days", "4 days of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 4; }),
-	new Achievement("5 days", "6 days of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 6; }),
-	new Achievement("6 days", "5 days of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 5; }),
-	new Achievement("7 days", "One week of total playtime", 0, function(){ return (Stats.start_date - new Date().getTime) / 1000 / 60 / 60 / 24 >= 7; }),
+	new Achievement("60 minutes", "1 hour of total playtime", 0, function(){ return Stats.play_time / 60 / 60 >= 1; }),
+	new Achievement("24 hours", "1 day of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 1; }),
+	new Achievement("2 days", "2 days of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 2; }),
+	new Achievement("3 days", "3 days of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 3; }),
+	new Achievement("4 days", "4 days of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 4; }),
+	new Achievement("5 days", "6 days of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 5; }),
+	new Achievement("6 days", "5 days of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 6; }),
+	new Achievement("7 days", "One week of total playtime", 0, function(){ return Stats.play_time / 60 / 60 / 24 >= 7; })
 ];
 
-// Gems wasted
 Achievements.wasted = [
 	new Achievement("Spillage", "Lose a gem when it falls outside the inventory", 10, function(){ return Stats.wasted >= 1; }),
 	new Achievement("Buffer Overflow", "Lose 50 gems when they fall outside the inventory", 100, function(){ return Stats.wasted >= 50; }),
@@ -665,8 +668,8 @@ Achievements.wasted = [
 
 // Misc
 Achievements.misc = {
-	inventory: new Achievement("So much space for activities", "Max out the inventory", 1e3, function(){ return false; }), // TODO
-	autodrop: new Achievement("Open the Floodgates", "Upgrade to 100% autodrop", 10e3, function(){ return false; }), // TODO
+	inventory: new Achievement("So much space for activities", "Max out the inventory", 500, function(){ return Upgrades[1].owned; }),
+	autodrop: new Achievement("Open the Floodgates", "Upgrade to 100% autodrop", 10e3, function(){ return Upgrades[4].owned; }),
 	sell: new Achievement("Reimbursement", "Sell a factory", 100, function(){ return Stats.sold >= 1; }),
 	hack: new Achievement("Script kiddie", "", -1, function(){ return true; }, {redtext: "Alternatively: Introduction to the Developer Console."}),
 };

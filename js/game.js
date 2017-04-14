@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 var money = 0;
-var lock = 0;
 
 var UI = {
 	click_powers: document.getElementById("click_powers"),
@@ -88,6 +87,15 @@ var AutoDrop = {
 			return Upgrades[2].img;
 		else
 			return "";
+	},
+	getRate: function() {
+		if(Upgrades[4].owned)
+			return Upgrades[4].rate;
+		else if(Upgrades[3].owned)
+			return Upgrades[3].rate;
+		else if (Upgrades[2].owned)
+			return Upgrades[2].rate;
+		return -1;
 	}
 };
 
@@ -148,8 +156,9 @@ function getFactoryHTML(gem) {
 			<div class="popup">
 				<strong class="name">Quartz Factory</strong>
 				<div class="rate">+1 per second</div>
-				<div class="owned">0 owned</div>
 				<div class="price"></div>
+				<div class="income"></div>
+				<div class="owned">0 owned</div>
 			</div>
 		</div>*/
 
@@ -167,13 +176,15 @@ function getFactoryHTML(gem) {
 			<strong class="name">Quartz Factory</strong>
 			<div class="rate">0.5 quartz per second</div>
 			<div class="value">Quartz sells for $1 each</div>
-			<div class="owned">0 owned</div>
 			<div class="price"></div>
+			<div class="profit"></div>
+			<div class="owned">0 owned</div>
 		</div>`;
 
 	refs.anchor = container.querySelector(".popup_anchor");
 	refs.image = refs.anchor.querySelector("img");
 	refs.popup = container.querySelector(".popup");
+	refs.profit = container.querySelector(".profit")
 	refs.name = container.querySelector(".name");
 	refs.rate = container.querySelector(".rate");
 	refs.price = container.querySelector(".price");
@@ -310,6 +321,11 @@ function updateClickPower(gem) {
 		clickpower.ui.anchor.className = "popup_anchor active";
 	else
 		clickpower.ui.anchor.className = "popup_anchor owned";
+
+	
+
+	// if(gem.clickpower.tippy)
+	// 	console.log(gem.clickpower.tippy.tooltippedEls = [gem.clickpower.tippy.tooltippedEls[0]])
 }
 
 function updateFactory(gem) {
@@ -324,7 +340,7 @@ function updateFactory(gem) {
 	factory.ui.value.innerText = gem.name + " sells for " + formatMoney(gem.getValue()) + " each";
 
 	factory.ui.anchor_owned.innerText = factory.owned;
-	factory.ui.anchor_price.innerText = purchase.quantity+"x "+formatMoney(purchase.cost);
+	factory.ui.anchor_price.innerText = purchase.quantity+"x \n"+formatMoney(purchase.cost);
 
 	if (BuyMode.mode == BuyMode.BUY) {
 		if (purchase.cost > money || purchase.quantity === 0)
@@ -378,7 +394,7 @@ function updateBuff(buff) {
 	buff.ui.name.innerHTML = buff.name;
 	buff.ui.description.innerHTML = buff.description;
 	buff.ui.progressbar.style.width = (buff.timeLeft / buff.getDuration()) * 100 + "%";
-	buff.ui.timeleft.innerHTML = formatTime(buff.timeLeft * 1000);
+	buff.ui.timeleft.innerHTML = formatTime(buff.timeLeft);
 }
 
 function updateAchievement(achievement, element) { // TODO this is wack
@@ -420,14 +436,14 @@ function updateAchievementIcon(achievement){
 }
 
 function updateStats() {
-	UI.stats.money.innerText = formatMoney();
+	UI.stats.money.innerText = formatMoney(Stats.money);
 	UI.stats.gems.innerText = Stats.gems;
 	UI.stats.clickpower_gems.innerText = Stats.clickpower_gems;
 	UI.stats.upgrades.innerText = Stats.upgrades;
 	UI.stats.clickpowers.innerText = Stats.clickpowers;
 	UI.stats.factories.innerText = Stats.factories;
 	//UI.stats.prestige.innerText = Stats.prestige;
-	UI.stats.time.innerText = formatTime(new Date().getTime() - Stats.start_date);
+	UI.stats.time.innerText = formatTime(Stats.play_time);
 	//UI.stats.prestige_time.innerText = formatTime(new Date().getTime() - Stats.prestige_start_date);
 	UI.stats.wasted.innerText = Stats.wasted;
 	UI.stats.achievements.innerText = Stats.achievements;
@@ -605,7 +621,7 @@ function buyFactory(gem) {
 		checkAll(Achievements.factory.byGem(gem));
 		checkAll(Achievements.factory.each);
 		checkAll(Achievements.factory.total);
-		//updateFactory(gem);
+		updateFactory(gem);
 	} else {
 		factory.owned -= purchase.quantity;
 		updateMoney(purchase.cost);
@@ -664,17 +680,8 @@ function updateMoney(amount = 0) {
 		updateFactory(gem);
 	});
 	Upgrades.forEach(function(upgrade) {
-		if (!upgrade.owned) {
-			if (upgrade.name === "Auto Drop V3") {
-				if (Upgrades[2].owned && Upgrade[3].owned)
-					updateUpgrade(upgrade);
-			} else if (upgrade.name === "Auto Drop V2") {
-				if (Upgrades[2].owned)
-					updateUpgrade(upgrade);
-			} else {
-				updateUpgrade(upgrade);
-			}
-		}
+		if (!upgrade.owned)
+			updateUpgrade(upgrade);
 	});
 	return money;
 }
@@ -766,13 +773,14 @@ function buildSave() {
 	Achievements.all.forEach(function(achievement) {
 		save.achievements.push(achievement.owned);
 	});
-	save.AutoDrop = AutoDrop.rate;
+	//save.AutoDrop = AutoDrop.get;
 	save.Buffs = {
 		baseRate: Buffs.baseRate,
 		autocollect: Buffs.autocollect
 	};
 	save.Settings = Settings;
 	save.Stats = Stats;
+	save.active_clickpower = Gems.indexOf(Gems.active_clickpower);
 
 
 	return JSON.stringify(save);
@@ -782,6 +790,7 @@ function buildSave() {
 function loadSave(save){
 	// Copy over the gamestate
 	money = save.money;
+	Gems.active_clickpower = Gems[save.active_clickpower];
 	Gems.forEach(function(gem, index) {
 		gem.clickpower.owned = save.gems[index].clickpower;
 		gem.factory.owned = save.gems[index].factory;
@@ -813,7 +822,7 @@ function loadSave(save){
 		updateAchievement(achievement, achievement.ui.popup); // TODO
 		updateAchievementIcon(achievement);
 	});
-	AutoDrop.rate = save.AutoDrop;
+	//AutoDrop.rate = save.AutoDrop;
 	Buffs.baseRate = save.Buffs.baseRate || Infinity;
 	Buffs.autocollect = save.Buffs.autocollect;
 	Settings = save.Settings;
@@ -829,10 +838,9 @@ function loadSave(save){
 }
 
 function saveGame() {
-	if (lock === 0) {
-		localStorage.setItem("save", buildSave());
-		return true;
-	}
+	localStorage.setItem("save", buildSave());
+	return true;
+	//console.log("Game saved");
 }
 
 function loadGame() {
@@ -865,10 +873,18 @@ function importGame(code){
 }
 
 function resetGame() {
-	lock = 1;
+	Settings.enable_save = false;
 	localStorage.clear();
 	console.log("Game save deleted");
 	location.reload();
+
+	// Gems.forEach(function(gem)){
+	// 	gem.clickpower.owned = false;
+	// 	gem.factory.owned = 0;
+	// 	gem.bonus = 1;
+	// 	AutoDrop.rate = -1;
+	// 	Buffs.baseRate = Infinity;
+	// }
 	return true;
 }
 
@@ -881,13 +897,14 @@ function simulate(delta) {
 	console.log("Inventory capacity: " + inv_cap + " gems");
 
 
-	var max_rate;
-	if (AutoDrop.rate === -1)
+	var max_rate,
+		rate = AutoDrop.getRate();
+	if (rate === -1)
 		max_rate = inv_cap / delta;
-	else if (AutoDrop.rate === -1)
+	else if (rate === -1)
 		max_rate = inv_cap;
 	else
-		max_rate = inv_cap / AutoDrop.rate;
+		max_rate = inv_cap / rate;
 	console.log("Max rate: " + max_rate + " gems/sec");
 
 	var rate = [];
@@ -935,12 +952,6 @@ function formatMoney(num = money) {
 	var suffix = ["", "k", "M", "B", "T", "Q"];
 
 	var formatted = "";
-
-	if (thirdpower == 0 || num > 100 )
-		formatted = Math.floor(num);
-	else 
-		formatted = parseFloat(Math.round(num * 100) / 100).toFixed(2);
-	/*
 	if (thirdpower === 0 || num >= 100)
 		formatted = Math.floor(num);
 	else if (num >= 10) {
@@ -948,29 +959,25 @@ function formatMoney(num = money) {
 	} else {
 		formatted = Math.floor(num * 100) / 100;
 	}
-	*/
 	formatted += suffix[thirdpower];
 	return "$" + formatted;
 }
 
-function formatTime(ms) {
-	time = ms/1000;
-	out_time = time;
-	out_suffix = " seconds";
+function formatTime (sec_num) {
+    //var sec_num = parseInt(this, 10); // don't forget the second param
+    var hours   = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
 
-	if (time > 60 && time < 3600) { // Larger than one minute but less than one hour
-		out_time /= 60;
-		out_suffix = " minutes";
-	} else if (time < 86400) { // Less than one day
-		out_time /= 3600;
-		out_suffix = " hours";
-	} else if (time > 86400) { // More than one day
-		out_time /= 86400;
-		out_suffix = " days";
-	}
-
-	return Math.floor(out_time) + out_suffix;
+    if (hours   < 10) {hours   = "0"+hours;}
+    if (minutes < 10) {minutes = "0"+minutes;}
+    if (seconds < 10) {seconds = "0"+seconds;}
+    return hours+':'+minutes+':'+Math.ceil(seconds);
 }
+
+// function formatTime(ms) {
+// 	return Math.ceil(ms / 1000) + "s";
+// }
 
 function getTotalRate() {
 	var rate = 0;
@@ -1049,7 +1056,7 @@ function init() {
 		// Tippy
 		gem.clickpower.ui.anchor.id = "cp_"+id+"_anchor";
 		gem.clickpower.ui.popup.id = "cp_"+id;
-		new Tippy("#cp_"+id+"_anchor", {
+		gem.clickpower.tippy = new Tippy("#cp_"+id+"_anchor", {
 		  html: "#cp_"+id,
 		  animateFill: false,
 		  arrow: true,
@@ -1144,12 +1151,10 @@ function init() {
 	setInterval(function() {
 		updateStats();
 		document.title = "Gem Drop ("+formatMoney()+")";
-	}, 1000);
-
-	setInterval(function() {
+		checkAll(Achievements.time);
 		if(Settings.enable_save)
 			saveGame();
-	}, 15000)
+	}, 1000);
 
 	loadGame();
 	updateMoney();

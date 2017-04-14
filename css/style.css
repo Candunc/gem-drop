@@ -343,7 +343,7 @@ button:focus {
 }
 
 .achievement .value {
-	float:right;
+	float:center;
 	font-size:30px;
 	color:green;
 	font-weight:bold;
